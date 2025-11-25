@@ -91,7 +91,7 @@ python compute_metrics.py \
     --mode sweep \
     --task PACS-photo \
     --split sketch \
-    --metrics CSS
+    --metrics DDB_global DDB_deep DDB_out 
 ```
 
 **Post-deployment (OOD Predict) mode:**
@@ -101,7 +101,7 @@ python compute_metrics.py \
     --mode ood_predict \
     --task PACS-photo \
     --split sketch \
-    --metrics distance_from_id robust_graph_similarity \
+    --metrics CSS \
     --model_id 0
 ```
 
