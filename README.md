@@ -69,7 +69,7 @@ python compute_metrics.py \
     --mode sweep \
     --task PACS-photo \
     --split sketch \
-    --metrics generalization_graph_metrics CSS
+    --metrics DDB_global DDB_deep DDB_out 
 ```
 
 ### Arguments
@@ -91,7 +91,7 @@ python compute_metrics.py \
     --mode sweep \
     --task PACS-photo \
     --split sketch \
-    --metrics generalization_graph_metrics CSS
+    --metrics CSS
 ```
 
 **Post-deployment (OOD Predict) mode:**

@@ -194,7 +194,7 @@ def get_num_edges(graph):
 
     return num_edge
 
-def get_shortcut_vs_deep_ratio(graph, shallow_thresh=3, deep_thresh=9):
+def get_DDB_deep(graph, shallow_thresh=3, deep_thresh=9):
     """
     Compute ratio of shortcut (shallow→deep) edge importance
     vs. local/no-skip edges (within shallow or within deep, + late→late edges).
@@ -243,7 +243,7 @@ def get_shortcut_vs_deep_ratio(graph, shallow_thresh=3, deep_thresh=9):
 
     return deep_score / (shortcut_score + 1e-12)
 
-def get_edge_start_ratio_deep_vs_shallow(graph, shallow_thresh=0, deep_thresh=11):
+def get_DDB_global(graph, shallow_thresh=0, deep_thresh=11):
     """
     Compute ratio of total edge importance from deep vs. shallow layers.
 
@@ -282,7 +282,7 @@ def get_edge_start_ratio_deep_vs_shallow(graph, shallow_thresh=0, deep_thresh=11
     return deep_score / (shallow_score + 1e-12)
 
 
-def get_logit_contribution_ratio_deep_vs_shallow(graph, shallow_thresh=3, deep_thresh=9):
+def get_DDB_out(graph, shallow_thresh=3, deep_thresh=9):
     shallow_score, deep_score = 0.0, 0.0
 
     for edge in graph.edges.values():
