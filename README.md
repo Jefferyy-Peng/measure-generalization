@@ -115,15 +115,7 @@ python compute_metrics.py \
 metrics/<task>_<split>_<metric_type>.csv
 ```
 
-  * Circuit visualizations are saved in:
-
-<!-- end list -->
-
-```php-template
-figures/<task>_<split>/
-```
-
-  * Raw circuit data (importances) are saved in:
+  * Raw circuit data (importances) and circuit visualization are saved in:
 
 <!-- end list -->
 
