@@ -1,6 +1,6 @@
 
 GRAPH_ROOT="circuits/EAP-IG-inputs_mean-positional_edge_train_kl_divergence"                   # Root directory containing model subfolders
-SCRIPT_PATH="/home/yxpengcs/PycharmProjects/vMIB-circuit/viz_graph.py"    # Replace with path to your Python script
+SCRIPT_PATH="./viz_graph.py"    # Replace with path to your Python script
 COMPONENT_COUNTS=(101)         # List of top-N components to apply
 
 for dir in $GRAPH_ROOT/camelyon17-set2-mean*/; do

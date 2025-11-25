@@ -539,7 +539,7 @@ if os.path.exists('Hs_8.p'):
 else:
     for task, domains in tasks.items():
         for domain in domains:
-            SWEEP_CSV = f"/home/yxpengcs/PycharmProjects/vit-spurious-robustness/output/{task}_sweep_results_new.csv"
+            SWEEP_CSV = f"../vit-spurious-robustness/output/{task}_sweep_results_new.csv"
             sweep = pd.read_csv(SWEEP_CSV)
 
             circuits = {}
@@ -557,13 +557,13 @@ else:
                     domain_name = domain
 
                 gpath = (
-                    f"/home/yxpengcs/PycharmProjects/vMIB-circuit/circuits/EAP-IG-inputs_mean-positional_edge_train_kl_divergence/"
+                    f"./circuits/EAP-IG-inputs_mean-positional_edge_train_kl_divergence/"
                     f"{task.replace('_', '-')}-mean-{domain_name.replace('_', '-')}_sweep_{model_id}/importances.pt"
                 )
                 per_example_scores_path = gpath.replace("importances.pt", "perexample_importances.p")
                 if residual:
                     gpath = (
-                        f"/home/yxpengcs/PycharmProjects/vMIB-circuit/circuits/EAP-IG-inputs_mean-positional_edge_train_kl_divergence/"
+                        f"./circuits/EAP-IG-inputs_mean-positional_edge_train_kl_divergence/"
                         f"{task.replace('_', '-')}-mean-{domain_name.replace('_', '-')}_sweep_{model_id}/residual_importances.pt"
                     )
 
@@ -1013,7 +1013,7 @@ motif_vec = H_mean.flatten()
 
 for task, domains in tasks.items():
     for domain in domains:
-        SWEEP_CSV = f"/home/yxpengcs/PycharmProjects/vit-spurious-robustness/output/{task}_sweep_results_new.csv"
+        SWEEP_CSV = f"../vit-spurious-robustness/output/{task}_sweep_results_new.csv"
         sweep = pd.read_csv(SWEEP_CSV)
 
         mats = []
@@ -1030,13 +1030,13 @@ for task, domains in tasks.items():
                 domain_name = domain
 
             gpath = (
-                f"/home/yxpengcs/PycharmProjects/vMIB-circuit/circuits/EAP-IG-inputs_mean-positional_edge_train_kl_divergence/"
+                f"./circuits/EAP-IG-inputs_mean-positional_edge_train_kl_divergence/"
                 f"{task.replace('_', '-')}-mean-{domain_name.replace('_', '-')}_sweep_{model_id}/importances.pt"
             )
             per_example_scores_path = gpath.replace("importances.pt", "perexample_importances.p")
             if residual:
                 gpath = (
-                    f"/home/yxpengcs/PycharmProjects/vMIB-circuit/circuits/EAP-IG-inputs_mean-positional_edge_train_kl_divergence/"
+                    f"./circuits/EAP-IG-inputs_mean-positional_edge_train_kl_divergence/"
                     f"{task.replace('_', '-')}-mean-{domain_name.replace('_', '-')}_sweep_{model_id}/residual_importances.pt"
                 )
 

@@ -1252,7 +1252,7 @@ def cached_metric(model_id: int, metric: str):
     return val
 
 def compute_metric_for_sweep(task, split, circuit_type, metrics, probit=False):
-    SWEEP_CSV = f"/home/yxpengcs/PycharmProjects/vit-spurious-robustness/output/{task}_sweep_results_new.csv"
+    SWEEP_CSV = f"../vit-spurious-robustness/output/{task}_sweep_results_new.csv"
     OUT_CSV = f"metrics/{task}_model_{split}{circuit_type}_data.csv"
     if 'waterbirds' in task:
         sweep = pd.read_csv(SWEEP_CSV)[
@@ -1295,7 +1295,7 @@ def compute_metric_for_sweep(task, split, circuit_type, metrics, probit=False):
              "test_AC_location_43","test_ANE_location_43","test_l2_location_43","test_EMD_location_43"]]
     else:
         sweep = pd.read_csv(SWEEP_CSV)
-    ckpt_root_path = '/home/yxpengcs/PycharmProjects/vit-spurious-robustness'
+    ckpt_root_path = '../vit-spurious-robustness'
     # num_components = [100 for i in range(len(df))]
     # id_accs = df["val_id_acc"].tolist()
     # generalize_accs = df["test_acc_2"].tolist()
@@ -1351,7 +1351,7 @@ def compute_metric_for_sweep(task, split, circuit_type, metrics, probit=False):
 def compute_metric_for_ood_predict(task, split, circuit_type, metrics,
             probit=False, model_id=0, topn=200, residual=False):
     resid_str = "_resid" if residual else ""
-    SWEEP_CSV = f"/home/yxpengcs/PycharmProjects/vit-spurious-robustness/output/{task}_sweep_results_new.csv"
+    SWEEP_CSV = f"../vit-spurious-robustness/output/{task}_sweep_results_new.csv"
     OUT_CSV = f"metrics/{task}_model_{model_id}{circuit_type}{resid_str}_{topn}_data.csv"
 
     sweep = pd.read_csv(SWEEP_CSV)

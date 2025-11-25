@@ -217,7 +217,7 @@ if residual:
     resid_str = "_resid"
 else:
     resid_str = ""
-SWEEP_CSV = f"/home/yxpengcs/PycharmProjects/vit-spurious-robustness/output/{task}_sweep_results_new.csv"
+SWEEP_CSV = f"../vit-spurious-robustness/output/{task}_sweep_results_new.csv"
 sweep = pd.read_csv(SWEEP_CSV)
 
 test_cols = sweep.filter(regex=r'^test_f1_').columns.tolist()
@@ -248,17 +248,17 @@ ordered_domains = sorted(test_accs.keys(), key=lambda d: test_accs[d], reverse=T
 for domain in tqdm(['hospital3_slide32', 'hospital3_slide30', 'hospital4_slide49']):
     # ---- Load graph ONCE for this domain ----
     gpath = (
-        f"/home/yxpengcs/PycharmProjects/vMIB-circuit/circuits/EAP-IG-inputs_mean-positional_edge_train_kl_divergence/"
+        f"./circuits/EAP-IG-inputs_mean-positional_edge_train_kl_divergence/"
         f"{task}-mean-{domain.replace('_', '-')}_sweep_{model_id}/importances.pt"
     )
     id_gpath = (
-        f"/home/yxpengcs/PycharmProjects/vMIB-circuit/circuits/EAP-IG-inputs_mean-positional_edge_train_kl_divergence/"
+        f"./circuits/EAP-IG-inputs_mean-positional_edge_train_kl_divergence/"
         f"{task}-mean-id_sweep_{model_id}/importances.pt"
     )
     per_example_scores_path = gpath.replace("importances.pt", "perexample_importances.p")
     if residual:
         gpath = (
-            f"/home/yxpengcs/PycharmProjects/vMIB-circuit/circuits/EAP-IG-inputs_mean-positional_edge_train_kl_divergence/"
+            f"./circuits/EAP-IG-inputs_mean-positional_edge_train_kl_divergence/"
             f"{task}-mean-{domain.replace('_', '-')}_sweep_{model_id}/residual_importances.pt"
         )
 

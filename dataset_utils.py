@@ -937,74 +937,6 @@ class TerraIncognita(Dataset):
     def __getitem__(self, index):
         return self.datasets[index]
 
-def get_metashift_dataset(data_label_correlation=None,  # not used but kept for API consistency
-                          split="train",
-                          transform=None,
-                          root_dir="/home/yxpengcs/PycharmProjects/Moon-Shape-ICML-2023/experiments/metashift/data",
-                          val_size=0.2,
-                          seed=42):
-    """
-    Returns a dataset (train, val, or test) similar to get_waterbird_dataset.
-    For 'train' and 'val', split from 'train' metadata entries.
-    """
-    # Load all "train" entries if split is train/val
-    full_dataset = MetaShiftDataset(split='train' if split in ['train', 'val'] else split,
-                                    root_dir=root_dir,
-                                    transform=transform)
-
-    if split == 'test':
-        return full_dataset
-
-    # Stratified split based on class + env
-    metadata = full_dataset.samples
-    stratify_col = metadata["class"].astype(str) + "_" + metadata["env"].astype(str)
-    train_idx, val_idx = train_test_split(
-        metadata.index,
-        test_size=val_size,
-        stratify=stratify_col,
-        random_state=seed,
-    )
-    if split == "train":
-        return Subset(full_dataset, train_idx)
-    elif split == "val":
-        return Subset(full_dataset, val_idx)
-class MetaShiftDataset(Dataset):
-    def __init__(self, split, root_dir, transform=None):
-        """
-        Args:
-            split (str): One of ['train', 'majority-val', 'minority-val']
-            root_dir (str): Path to 'data' directory (e.g., '../../experiments/metashift/data')
-            transform (callable, optional): Transform to apply to each image
-        """
-        self.split = split
-        self.root_dir = root_dir
-        self.transform = transform
-
-        # Load metadata
-        metadata_path = os.path.join(root_dir, "metadata.csv")
-        metadata_df = pd.read_csv(metadata_path)
-        if split != 'train':
-            self.samples = metadata_df[metadata_df["split"] != 'train'].reset_index(drop=True)
-        else:
-            self.samples = metadata_df[metadata_df["split"] == split].reset_index(drop=True)
-
-    def __len__(self):
-        return len(self.samples)
-
-    def __getitem__(self, idx):
-        row = self.samples.iloc[idx]
-        img_path = os.path.join(self.root_dir, row['filename'])
-        img = Image.open(img_path).convert("RGB")
-
-        if self.transform:
-            img = self.transform(img)
-
-        label = int(row['class'])  # 0 = cat, 1 = dog
-        env = int(row['env'])
-        env = 0 if env == 0 or env == 2 else 1 # 0 = indoor, 1 = outdoor
-
-        return img, label, env
-
 class CutoutTransform:
     """Random erasing (cutout) on image."""
     def __init__(self, size=32, p=1.0):
@@ -1062,16 +994,16 @@ def get_loader(task, model):
     if task == 'cifar10':
         cifar_c = ["fog", "frost", "motion_blur", "brightness", "defocus_blur", "snow", "zoom_blur"]
         severities = [1, 2, 3, 4, 5]
-        trainset = torchvision.datasets.CIFAR10(root=f"/home/yxpengcs/PycharmProjects/ATC_code/data/CIFAR10", train=True, download=True, \
+        trainset = torchvision.datasets.CIFAR10(root=f"../ATC_code/data/CIFAR10", train=True, download=True, \
                                      transform=transform_train)
 
-        valset = torchvision.datasets.CIFAR10(root=f"/home/yxpengcs/PycharmProjects/ATC_code/data/CIFAR10", train=False, download=True, \
+        valset = torchvision.datasets.CIFAR10(root=f"../ATC_code/data/CIFAR10", train=False, download=True, \
                                                  transform=transform_test)
 
         testset = {}
         for data in cifar_c:
             for severity in severities:
-                testset[f"{data}-{severity}"] = CIFAR10_C(root=f"/home/yxpengcs/PycharmProjects/ATC_code/data/CIFAR10/CIFAR-10-C/", data_type=data, severity=severity,
+                testset[f"{data}-{severity}"] = CIFAR10_C(root=f"../ATC_code/data/CIFAR10/CIFAR-10-C/", data_type=data, severity=severity,
                                     transform=transform_test)
 
     if task == "waterbirds":
@@ -1090,11 +1022,11 @@ def get_loader(task, model):
         testset = get_metashift_dataset(split="test", transform=transform_test)
 
     if task == 'metashift-control':
-        trainset = get_metashift_dataset(split="train", root_dir=f'/home/yxpengcs/PycharmProjects/Moon-Shape-ICML-2023/experiments/metashift-0.1/data', transform=transform_train)
-        valset = get_metashift_dataset(split="val", root_dir=f'/home/yxpengcs/PycharmProjects/Moon-Shape-ICML-2023/experiments/metashift-0.1/data', transform=transform_test)
+        trainset = get_metashift_dataset(split="train", root_dir=f'../Moon-Shape-ICML-2023/experiments/metashift-0.1/data', transform=transform_train)
+        valset = get_metashift_dataset(split="val", root_dir=f'../Moon-Shape-ICML-2023/experiments/metashift-0.1/data', transform=transform_test)
         testset = {}
         for i in [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8]:
-            testset[f'{i}'] = get_metashift_dataset(split="test", root_dir=f'/home/yxpengcs/PycharmProjects/Moon-Shape-ICML-2023/experiments/metashift-{i}/data', transform=transform_test)
+            testset[f'{i}'] = get_metashift_dataset(split="test", root_dir=f'../Moon-Shape-ICML-2023/experiments/metashift-{i}/data', transform=transform_test)
 
     if task == 'yearbook':
         import argparse
@@ -1117,7 +1049,7 @@ def get_loader(task, model):
 
     if task == 'camelyon17-hospital1':
         whole_dataset = wilds.get_dataset(
-            "camelyon17", unlabeled=False, root_dir="/home/yxpengcs/PycharmProjects/DomainBed/domainbed/data/",
+            "camelyon17", unlabeled=False, root_dir="../DomainBed/domainbed/data/",
             split_scheme="official"
         )
         dataset = whole_dataset.get_subset("val", transform=transform_test)
@@ -1127,14 +1059,14 @@ def get_loader(task, model):
 
     if task == 'camelyon17-id':
         whole_dataset = wilds.get_dataset(
-            "camelyon17", unlabeled=False, root_dir="/home/yxpengcs/PycharmProjects/DomainBed/domainbed/data/",
+            "camelyon17", unlabeled=False, root_dir="../DomainBed/domainbed/data/",
             split_scheme="official"
         )
         dataset = whole_dataset.get_subset("id_val", transform=transform_test)
 
     if task == 'camelyon17-hospital2':
         whole_dataset = wilds.get_dataset(
-            "camelyon17", unlabeled=False, root_dir="/home/yxpengcs/PycharmProjects/DomainBed/domainbed/data/",
+            "camelyon17", unlabeled=False, root_dir="../DomainBed/domainbed/data/",
             split_scheme="official"
         )
         dataset = whole_dataset.get_subset("test", transform=transform_test)
@@ -1153,7 +1085,7 @@ def get_loader(task, model):
         pd.to_datetime = _patched_to_datetime
         whole_dataset = wilds.get_dataset(
             dataset="fmow",
-            root_dir="/home/yxpengcs/PycharmProjects/DomainBed/domainbed/data/",
+            root_dir="../DomainBed/domainbed/data/",
             download=True,
         )
         trainset = whole_dataset.get_subset('train', transform=transform_train)
@@ -1182,7 +1114,7 @@ def get_loader(task, model):
     if task == 'iwildcam':
         whole_dataset = wilds.get_dataset(
             dataset="iwildcam",
-            root_dir="/home/yxpengcs/PycharmProjects/DomainBed/domainbed/data/",
+            root_dir="../DomainBed/domainbed/data/",
             download=True,
         )
         trainset = whole_dataset.get_subset("train", transform=transform_train)
@@ -1208,75 +1140,75 @@ def get_loader(task, model):
             testset[f"location_{int(loc.item())}"] = subset
 
     if task == 'PACS-cartoon':
-        dataset = PACSDataset('/home/yxpengcs/PycharmProjects/assaying-ood/webdata/cartoon/split.json', 'test',  transform=transform_test)
+        dataset = PACSDataset('../assaying-ood/webdata/cartoon/split.json', 'test',  transform=transform_test)
 
     if task == 'PACS-art_painting':
-        dataset = PACSDataset('/home/yxpengcs/PycharmProjects/assaying-ood/webdata/art_painting/split.json', 'test,', transform=transform_test)
+        dataset = PACSDataset('../assaying-ood/webdata/art_painting/split.json', 'test,', transform=transform_test)
 
     if task == 'PACS-photo':
-        dataset = PACSDataset('/home/yxpengcs/PycharmProjects/assaying-ood/webdata/photo/split.json', 'test', transform=transform_test)
+        dataset = PACSDataset('../assaying-ood/webdata/photo/split.json', 'test', transform=transform_test)
 
     if task == 'PACS-sketch':
-        dataset = PACSDataset('/home/yxpengcs/PycharmProjects/assaying-ood/webdata/sketch/split.json', 'test', transform=transform_test)
+        dataset = PACSDataset('../assaying-ood/webdata/sketch/split.json', 'test', transform=transform_test)
 
     if task == 'terra-incognita-38-location46':
-        root_dir = '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita'
+        root_dir = '../vit-spurious-robustness/domainbed/data/terra_incognita'
         dataset = TerraIncognita(root_dir, 'val', "location_46", transform=transform_test)
 
     if task == 'terra-incognita-38-location43':
-        root_dir = '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita'
+        root_dir = '../vit-spurious-robustness/domainbed/data/terra_incognita'
         dataset = TerraIncognita(root_dir, 'val', "location_43", transform=transform_test)
 
     if task == 'terra-incognita-38-location100':
-        root_dir = '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita'
+        root_dir = '../vit-spurious-robustness/domainbed/data/terra_incognita'
         dataset = TerraIncognita(root_dir, 'val', "location_100", transform=transform_test)
 
     if task == 'terra-incognita-38-location38':
-        root_dir = '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita'
+        root_dir = '../vit-spurious-robustness/domainbed/data/terra_incognita'
         dataset = TerraIncognita(root_dir, 'val', "location_38", transform=transform_test)
 
     if task == 'terra-incognita-43-location38':
-        root_dir = '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita'
+        root_dir = '../vit-spurious-robustness/domainbed/data/terra_incognita'
         dataset = TerraIncognita(root_dir, 'val', "location_38", transform=transform_test)
 
     if task == 'terra-incognita-43-location43':
-        root_dir = '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita'
+        root_dir = '../vit-spurious-robustness/domainbed/data/terra_incognita'
         dataset = TerraIncognita(root_dir, 'val', "location_43", transform=transform_test)
 
     if task == 'terra-incognita-43-location46':
-        root_dir = '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita'
+        root_dir = '../vit-spurious-robustness/domainbed/data/terra_incognita'
         dataset = TerraIncognita(root_dir, 'val', "location_46", transform=transform_test)
 
     if task == 'terra-incognita-43-location100':
-        root_dir = '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita'
+        root_dir = '../vit-spurious-robustness/domainbed/data/terra_incognita'
         dataset = TerraIncognita(root_dir, 'val', "location_100", transform=transform_test)
 
     if task == 'terra-incognita-46-location38':
-        root_dir = '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita'
+        root_dir = '../vit-spurious-robustness/domainbed/data/terra_incognita'
         dataset = TerraIncognita(root_dir, 'val', "location_38", transform=transform_test)
 
     if task == 'terra-incognita-46-location43':
-        root_dir = '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita'
+        root_dir = '../vit-spurious-robustness/domainbed/data/terra_incognita'
         dataset = TerraIncognita(root_dir, 'val', "location_43", transform=transform_test)
 
     if task == 'terra-incognita-46-location46':
-        root_dir = '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita'
+        root_dir = '../vit-spurious-robustness/domainbed/data/terra_incognita'
         dataset = TerraIncognita(root_dir, 'val', "location_46", transform=transform_test)
 
     if task == 'terra-incognita-46-location100':
-        root_dir = '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita'
+        root_dir = '../vit-spurious-robustness/domainbed/data/terra_incognita'
         dataset = TerraIncognita(root_dir, 'val', "location_100", transform=transform_test)
 
     if task == 'terra-incognita-100-location38':
-        root_dir = '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita'
+        root_dir = '../vit-spurious-robustness/domainbed/data/terra_incognita'
         dataset = TerraIncognita(root_dir, 'val', "location_38", transform=transform_test)
 
     if task == 'terra-incognita-100-location43':
-        root_dir = '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita'
+        root_dir = '../vit-spurious-robustness/domainbed/data/terra_incognita'
         dataset = TerraIncognita(root_dir, 'val', "location_43", transform=transform_test)
 
     if task == 'terra-incognita-100-location46':
-        root_dir = '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita'
+        root_dir = '../vit-spurious-robustness/domainbed/data/terra_incognita'
         dataset = TerraIncognita(root_dir, 'val', "location_46", transform=transform_test)
 
     # train_sampler = RandomSampler(trainset) if args.local_rank == -1 else DistributedSampler(trainset)
@@ -1305,59 +1237,59 @@ def setup_dataset(dataset_name, split, model_name=None, num_examples=None, fragm
         ])
         split = 'train' if split == 'train' else 'val'
         if model_name == 'ViT-B_16':
-            dataset = ImageNetDataset(root_dir=f'/home/yxpengcs/Datasets/imagenet/{split}',
+            dataset = ImageNetDataset(root_dir=f'../../Datasets/imagenet/{split}',
                                       processor=AutoImageProcessor.from_pretrained("google/vit-base-patch16-224"),
                                       select_class=class_ranges, ctft_class_ranges=ctft_class_ranges)
         else:
-            dataset = ImageNetDataset(root_dir=f'/home/yxpengcs/Datasets/imagenet/{split}',
+            dataset = ImageNetDataset(root_dir=f'../../Datasets/imagenet/{split}',
                                       transform=transform, select_class=class_ranges, ctft_class_ranges=ctft_class_ranges)
     elif dataset_name == 'PACS-mean-sketch' or dataset_name == 'PACS-photo-mean-sketch' or dataset_name == 'PACS-cartoon-mean-sketch' or dataset_name == 'PACS-art_painting-mean-sketch':
         transform = get_transform(model_dict[model_name])
-        dataset = PACSDataset('/home/yxpengcs/PycharmProjects/assaying-ood/webdata/sketch/split.json', 'val', transform=transform)
-        intervention_dataset = PACSDataset('/home/yxpengcs/PycharmProjects/assaying-ood/webdata/sketch/split.json', 'val', transform=transform)
+        dataset = PACSDataset('../assaying-ood/webdata/sketch/split.json', 'val', transform=transform)
+        intervention_dataset = PACSDataset('../assaying-ood/webdata/sketch/split.json', 'val', transform=transform)
     elif dataset_name == 'PACS-mean-photo' or dataset_name == 'PACS-photo-mean' or dataset_name == 'PACS-cartoon-mean-photo' or dataset_name == 'PACS-art_painting-mean-photo':
         transform = get_transform(model_dict[model_name])
-        dataset = PACSDataset('/home/yxpengcs/PycharmProjects/assaying-ood/webdata/photo/split.json', 'val', transform=transform)
-        intervention_dataset = PACSDataset('/home/yxpengcs/PycharmProjects/assaying-ood/webdata/photo/split.json', 'val', transform=transform)
+        dataset = PACSDataset('../assaying-ood/webdata/photo/split.json', 'val', transform=transform)
+        intervention_dataset = PACSDataset('../assaying-ood/webdata/photo/split.json', 'val', transform=transform)
     elif dataset_name == 'PACS-mean-cartoon' or dataset_name == 'PACS-photo-mean-cartoon' or dataset_name == 'PACS-cartoon-mean' or dataset_name == 'PACS-art_painting-mean-cartoon':
         transform = get_transform(model_dict[model_name])
-        dataset = PACSDataset('/home/yxpengcs/PycharmProjects/assaying-ood/webdata/cartoon/split.json', 'val', transform=transform)
-        intervention_dataset = PACSDataset('/home/yxpengcs/PycharmProjects/assaying-ood/webdata/cartoon/split.json', 'val', transform=transform)
+        dataset = PACSDataset('../assaying-ood/webdata/cartoon/split.json', 'val', transform=transform)
+        intervention_dataset = PACSDataset('../assaying-ood/webdata/cartoon/split.json', 'val', transform=transform)
     elif dataset_name == 'PACS-mean-art_painting' or dataset_name == 'PACS-photo-mean-art_painting' or dataset_name == 'PACS-cartoon-mean-art_painting' or dataset_name == 'PACS-art_painting-mean':
         transform = get_transform(model_dict[model_name])
-        dataset = PACSDataset('/home/yxpengcs/PycharmProjects/assaying-ood/webdata/art_painting/split.json', 'val', transform=transform)
-        intervention_dataset = PACSDataset('/home/yxpengcs/PycharmProjects/assaying-ood/webdata/art_painting/split.json', 'val', transform=transform)
+        dataset = PACSDataset('../assaying-ood/webdata/art_painting/split.json', 'val', transform=transform)
+        intervention_dataset = PACSDataset('../assaying-ood/webdata/art_painting/split.json', 'val', transform=transform)
     elif 'PACS-set2' in dataset_name:
         transform = get_transform(model_dict[model_name])
         if 'id1' in dataset_name:
-            dataset = PACSDataset(f'/home/yxpengcs/PycharmProjects/assaying-ood/webdata/sketch/split.json', 'test', transform=transform)
-            intervention_dataset = PACSDataset(f'/home/yxpengcs/PycharmProjects/assaying-ood/webdata/sketch/split.json', 'test', transform=transform)
+            dataset = PACSDataset(f'../assaying-ood/webdata/sketch/split.json', 'test', transform=transform)
+            intervention_dataset = PACSDataset(f'../assaying-ood/webdata/sketch/split.json', 'test', transform=transform)
         elif 'id2' in dataset_name:
-            dataset = PACSDataset(f'/home/yxpengcs/PycharmProjects/assaying-ood/webdata/sketch/split.json', 'train', transform=transform)
-            intervention_dataset = PACSDataset(f'/home/yxpengcs/PycharmProjects/assaying-ood/webdata/sketch/split.json', 'train', transform=transform)
+            dataset = PACSDataset(f'../assaying-ood/webdata/sketch/split.json', 'train', transform=transform)
+            intervention_dataset = PACSDataset(f'../assaying-ood/webdata/sketch/split.json', 'train', transform=transform)
         else:
             domain = dataset_name.split('-')[3]
             split = dataset_name.split('-')[4]
             if domain not in ['train', 'val', 'test']:
                 tfm = copy.deepcopy(transform)
                 tfm.transforms.insert(1, CorruptionTransform(domain, int(split)))
-                dataset = PACSDataset(f'/home/yxpengcs/PycharmProjects/assaying-ood/webdata/sketch/split.json', 'val',
+                dataset = PACSDataset(f'../assaying-ood/webdata/sketch/split.json', 'val',
                                       transform=tfm)
                 intervention_dataset = PACSDataset(
-                    f'/home/yxpengcs/PycharmProjects/assaying-ood/webdata/sketch/split.json', 'val',
+                    f'../assaying-ood/webdata/sketch/split.json', 'val',
                     transform=tfm)
             else:
-                dataset = PACSDataset(f'/home/yxpengcs/PycharmProjects/assaying-ood/webdata/{domain}/split.json', split, transform=transform)
-                intervention_dataset = PACSDataset(f'/home/yxpengcs/PycharmProjects/assaying-ood/webdata/{domain}/split.json', split, transform=transform)
+                dataset = PACSDataset(f'../assaying-ood/webdata/{domain}/split.json', split, transform=transform)
+                intervention_dataset = PACSDataset(f'../assaying-ood/webdata/{domain}/split.json', split, transform=transform)
     elif 'camelyon17-set2' in dataset_name:
         from wilds.datasets.wilds_dataset import WILDSSubset
         transform = get_transform(model_dict[model_name])
         whole_dataset = wilds.get_dataset(
-            "camelyon17", unlabeled=False, root_dir="/home/yxpengcs/PycharmProjects/DomainBed/domainbed/data/", split_scheme="official"
+            "camelyon17", unlabeled=False, root_dir="../DomainBed/domainbed/data/", split_scheme="official"
         )
-        with open('/home/yxpengcs/PycharmProjects/DomainBed/domainbed/data/camelyon17_v1.0/splits.pkl', 'rb') as file:
+        with open('../DomainBed/domainbed/data/camelyon17_v1.0/splits.pkl', 'rb') as file:
             train_idx, val_idx, testsets_idx = pickle.load(file)
-        with open('/home/yxpengcs/PycharmProjects/DomainBed/domainbed/data/camelyon17_v1.0/splits_id.pkl', 'rb') as file:
+        with open('../DomainBed/domainbed/data/camelyon17_v1.0/splits_id.pkl', 'rb') as file:
             id_idx = pickle.load(file)
 
         if '-id' in dataset_name:
@@ -1422,7 +1354,7 @@ def setup_dataset(dataset_name, split, model_name=None, num_examples=None, fragm
     elif dataset_name == 'camelyon17-mean':
         transform = get_transform(model_dict[model_name])
         whole_dataset = wilds.get_dataset(
-            "camelyon17", unlabeled=False, root_dir="/home/yxpengcs/PycharmProjects/DomainBed/domainbed/data/", split_scheme="official"
+            "camelyon17", unlabeled=False, root_dir="../DomainBed/domainbed/data/", split_scheme="official"
         )
         dataset = whole_dataset.get_subset("id_val", transform=transform)
         torch.manual_seed(0)
@@ -1433,7 +1365,7 @@ def setup_dataset(dataset_name, split, model_name=None, num_examples=None, fragm
     elif dataset_name == 'camelyon17-mean-hospital1':
         transform = get_transform(model_dict[model_name])
         whole_dataset = wilds.get_dataset(
-            "camelyon17", unlabeled=False, root_dir="/home/yxpengcs/PycharmProjects/DomainBed/domainbed/data/", split_scheme="official"
+            "camelyon17", unlabeled=False, root_dir="../DomainBed/domainbed/data/", split_scheme="official"
         )
         dataset = whole_dataset.get_subset("val", transform=transform)
         torch.manual_seed(0)
@@ -1445,16 +1377,16 @@ def setup_dataset(dataset_name, split, model_name=None, num_examples=None, fragm
         transform = get_transform(model_dict[model_name])
         type = dataset_name.split('-')[2]
         if type == 'id':
-            dataset = torchvision.datasets.CIFAR10(root=f"/home/yxpengcs/PycharmProjects/ATC_code/data/CIFAR10", train=False, download=True, \
+            dataset = torchvision.datasets.CIFAR10(root=f"../ATC_code/data/CIFAR10", train=False, download=True, \
                                                  transform=transform)
-            intervention_dataset = torchvision.datasets.CIFAR10(root=f"/home/yxpengcs/PycharmProjects/ATC_code/data/CIFAR10",
+            intervention_dataset = torchvision.datasets.CIFAR10(root=f"../ATC_code/data/CIFAR10",
                                                    train=False, download=True, \
                                                    transform=transform)
         else:
             severity = int(dataset_name.split('-')[3])
-            dataset = CIFAR10_C(root=f"/home/yxpengcs/PycharmProjects/ATC_code/data/CIFAR10/CIFAR-10-C/", data_type=type, severity=severity,
+            dataset = CIFAR10_C(root=f"../ATC_code/data/CIFAR10/CIFAR-10-C/", data_type=type, severity=severity,
                                         transform=transform)
-            intervention_dataset = CIFAR10_C(root=f"/home/yxpengcs/PycharmProjects/ATC_code/data/CIFAR10/CIFAR-10-C/", data_type=type, severity=severity,
+            intervention_dataset = CIFAR10_C(root=f"../ATC_code/data/CIFAR10/CIFAR-10-C/", data_type=type, severity=severity,
                                         transform=transform)
         # torch.manual_seed(0)
         # indices = torch.randperm(len(dataset))[:1600]
@@ -1464,7 +1396,7 @@ def setup_dataset(dataset_name, split, model_name=None, num_examples=None, fragm
         transform = get_transform(model_dict[model_name])
         whole_dataset = wilds.get_dataset(
             dataset="iwildcam",
-            root_dir="/home/yxpengcs/PycharmProjects/DomainBed/domainbed/data/",
+            root_dir="../DomainBed/domainbed/data/",
             download=True,
         )
         if 'id' in dataset_name:
@@ -1497,7 +1429,7 @@ def setup_dataset(dataset_name, split, model_name=None, num_examples=None, fragm
         pd.to_datetime = _patched_to_datetime
         whole_dataset = wilds.get_dataset(
             dataset="fmow",
-            root_dir="/home/yxpengcs/PycharmProjects/DomainBed/domainbed/data/",
+            root_dir="../DomainBed/domainbed/data/",
             download=True,
         )
 
@@ -1529,7 +1461,7 @@ def setup_dataset(dataset_name, split, model_name=None, num_examples=None, fragm
     elif dataset_name == 'camelyon17-mean-hospital2':
         transform = get_transform(model_dict[model_name])
         whole_dataset = wilds.get_dataset(
-            "camelyon17", unlabeled=False, root_dir="/home/yxpengcs/PycharmProjects/DomainBed/domainbed/data/", split_scheme="official"
+            "camelyon17", unlabeled=False, root_dir="../DomainBed/domainbed/data/", split_scheme="official"
         )
         dataset = whole_dataset.get_subset("test", transform=transform)
         torch.manual_seed(0)
@@ -1539,55 +1471,55 @@ def setup_dataset(dataset_name, split, model_name=None, num_examples=None, fragm
         intervention_dataset = Subset(intervention_dataset, indices)
     elif dataset_name == 'terra-incognita-38-mean' or dataset_name == 'terra-incognita-43-mean-location38' or dataset_name == 'terra-incognita-46-mean-location38' or dataset_name == 'terra-incognita-100-mean-location38':
         transform = get_transform(model_dict[model_name])
-        dataset = TerraIncognita('/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita', 'val', "location_38", transform=transform)
-        intervention_dataset = TerraIncognita('/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita', 'val', "location_38", transform=transform)
+        dataset = TerraIncognita('../vit-spurious-robustness/domainbed/data/terra_incognita', 'val', "location_38", transform=transform)
+        intervention_dataset = TerraIncognita('../vit-spurious-robustness/domainbed/data/terra_incognita', 'val', "location_38", transform=transform)
     elif dataset_name == 'terra-incognita-38-mean-location43' or dataset_name == 'terra-incognita-43-mean' or dataset_name == 'terra-incognita-46-mean-location43' or dataset_name == 'terra-incognita-100-mean-location43':
         transform = get_transform(model_dict[model_name])
-        dataset = TerraIncognita('/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita', 'val', "location_43", transform=transform)
-        intervention_dataset = TerraIncognita('/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita', 'val', "location_43", transform=transform)
+        dataset = TerraIncognita('../vit-spurious-robustness/domainbed/data/terra_incognita', 'val', "location_43", transform=transform)
+        intervention_dataset = TerraIncognita('../vit-spurious-robustness/domainbed/data/terra_incognita', 'val', "location_43", transform=transform)
         # local_rng = np.random.RandomState(seed=42)  # fixed seed here
         # subset_size = int(len(dataset) * 0.2)
         # indices = local_rng.choice(len(dataset), size=subset_size, replace=False)
-        # intervention_dataset = TerraIncognita('/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita', None, "location_43", transform=transform)
+        # intervention_dataset = TerraIncognita('../vit-spurious-robustness/domainbed/data/terra_incognita', None, "location_43", transform=transform)
         # dataset = Subset(dataset, indices)
         # intervention_dataset = Subset(intervention_dataset, indices)
     elif dataset_name == 'terra-incognita-38-mean-location46' or dataset_name == 'terra-incognita-43-mean-location46'  or dataset_name == 'terra-incognita-46-mean' or dataset_name == 'terra-incognita-100-mean-location46':
         transform = get_transform(model_dict[model_name])
         dataset = TerraIncognita(
-            '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita', 'val',
+            '../vit-spurious-robustness/domainbed/data/terra_incognita', 'val',
             "location_46", transform=transform)
         intervention_dataset = TerraIncognita(
-            '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita', 'val',
+            '../vit-spurious-robustness/domainbed/data/terra_incognita', 'val',
             "location_46", transform=transform)
         # local_rng = np.random.RandomState(seed=42)  # fixed seed here
         # subset_size = int(len(dataset) * 0.2)
         # indices = local_rng.choice(len(dataset), size=subset_size, replace=False)
         # intervention_dataset = TerraIncognita(
-        #     '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita', None,
+        #     '../vit-spurious-robustness/domainbed/data/terra_incognita', None,
         #     "location_46", transform=transform)
         # dataset = Subset(dataset, indices)
         # intervention_dataset = Subset(intervention_dataset, indices)
     elif dataset_name == 'terra-incognita-38-mean-location100' or dataset_name == 'terra-incognita-43-mean-location100' or dataset_name == 'terra-incognita-46-mean-location100' or dataset_name == 'terra-incognita-100-mean':
         transform = get_transform(model_dict[model_name])
         dataset = TerraIncognita(
-            '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita', 'val',
+            '../vit-spurious-robustness/domainbed/data/terra_incognita', 'val',
             "location_100", transform=transform)
         intervention_dataset = TerraIncognita(
-            '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita', 'val',
+            '../vit-spurious-robustness/domainbed/data/terra_incognita', 'val',
             "location_100", transform=transform)
         # local_rng = np.random.RandomState(seed=42)  # fixed seed here
         # subset_size = int(len(dataset) * 0.2)
         # indices = local_rng.choice(len(dataset), size=subset_size, replace=False)
         # intervention_dataset = TerraIncognita(
-        #     '/home/yxpengcs/PycharmProjects/vit-spurious-robustness/domainbed/data/terra_incognita', None,
+        #     '../vit-spurious-robustness/domainbed/data/terra_incognita', None,
         #     "location_100", transform=transform)
         # dataset = Subset(dataset, indices)
         # intervention_dataset = Subset(intervention_dataset, indices)
     elif 'metashift-control' in dataset_name:
         transform = get_transform(model_dict[model_name])
         ratio = dataset_name.split('-')[-1]
-        dataset = get_metashift_dataset(split="test", root_dir=f'/home/yxpengcs/PycharmProjects/Moon-Shape-ICML-2023/experiments/metashift-{ratio}/data', transform=transform)
-        intervention_dataset = get_metashift_dataset(split="test", root_dir=f'/home/yxpengcs/PycharmProjects/Moon-Shape-ICML-2023/experiments/metashift-{ratio}/data', transform=transform)
+        dataset = get_metashift_dataset(split="test", root_dir=f'../Moon-Shape-ICML-2023/experiments/metashift-{ratio}/data', transform=transform)
+        intervention_dataset = get_metashift_dataset(split="test", root_dir=f'../Moon-Shape-ICML-2023/experiments/metashift-{ratio}/data', transform=transform)
     elif dataset_name == 'metashift-mean':
         transform = get_transform(model_dict[model_name])
         dataset = get_metashift_dataset(split="val", transform=transform)
@@ -1602,8 +1534,8 @@ def setup_dataset(dataset_name, split, model_name=None, num_examples=None, fragm
         elif 'IN-21k' in model_name:
             processor = AutoImageProcessor.from_pretrained("google/vit-base-patch16-224-in21k")
 
-        train1 = ColoredObject(root_dir='/home/yxpengcs/PycharmProjects/vMIB-circuit/datasets/ColoredObject', processor=processor, env='env_0')
-        train2 = ColoredObject(root_dir='/home/yxpengcs/PycharmProjects/vMIB-circuit/datasets/ColoredObject', processor=processor, env='env_1')
+        train1 = ColoredObject(root_dir='../vMIB-circuit/datasets/ColoredObject', processor=processor, env='env_0')
+        train2 = ColoredObject(root_dir='../vMIB-circuit/datasets/ColoredObject', processor=processor, env='env_1')
         train1.combine(train2)
         dataset = train1
     elif dataset_name == 'colored-object-bg':
@@ -1612,25 +1544,25 @@ def setup_dataset(dataset_name, split, model_name=None, num_examples=None, fragm
         elif 'IN-21k' in model_name:
             processor = AutoImageProcessor.from_pretrained("google/vit-base-patch16-224-in21k")
 
-        train1 = ColoredObject(root_dir='/home/yxpengcs/PycharmProjects/vMIB-circuit/datasets/ColoredObject', mode='bg', processor=processor, env='env_0')
-        train2 = ColoredObject(root_dir='/home/yxpengcs/PycharmProjects/vMIB-circuit/datasets/ColoredObject', mode='bg', processor=processor, env='env_1')
+        train1 = ColoredObject(root_dir='../vMIB-circuit/datasets/ColoredObject', mode='bg', processor=processor, env='env_0')
+        train2 = ColoredObject(root_dir='../vMIB-circuit/datasets/ColoredObject', mode='bg', processor=processor, env='env_1')
         train1.combine(train2)
         dataset = train1
     elif dataset_name == 'waterbirds-mean':
         transform = get_transform(model_dict[model_name])
         dataset = WaterbirdDataset(data_correlation=0.95, split="train",
-                                   root_dir="/home/yxpengcs/PycharmProjects/vit-spurious-robustness-modified/datasets",
+                                   root_dir="../vit-spurious-robustness-modified/datasets",
                                    transform=transform, subset_fraction=0.2)
         intervention_dataset = WaterbirdDataset(data_correlation=0.95, split="train",
-                                       root_dir="/home/yxpengcs/PycharmProjects/vit-spurious-robustness-modified/datasets",
+                                       root_dir="../vit-spurious-robustness-modified/datasets",
                                        transform=transform, subset_fraction=0.2)
     elif dataset_name == 'waterbirds-mean-ood':
         transform = get_transform(model_dict[model_name])
         dataset = WaterbirdDataset(data_correlation=0.95, split="test",
-                                   root_dir="/home/yxpengcs/PycharmProjects/vit-spurious-robustness-modified/datasets",
+                                   root_dir="../vit-spurious-robustness-modified/datasets",
                                    transform=transform, subset_fraction=0.2)
         intervention_dataset = WaterbirdDataset(data_correlation=0.95, split="test",
-                                       root_dir="/home/yxpengcs/PycharmProjects/vit-spurious-robustness-modified/datasets",
+                                       root_dir="../vit-spurious-robustness-modified/datasets",
                                        transform=transform, subset_fraction=0.2)
     elif dataset_name == 'waterbirds-wg':
         transform = transforms.Compose([
@@ -1639,10 +1571,10 @@ def setup_dataset(dataset_name, split, model_name=None, num_examples=None, fragm
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ])
         dataset = WaterbirdDataset(data_correlation=0.95, split=split,
-                                   root_dir="/home/yxpengcs/PycharmProjects/vit-spurious-robustness-modified/datasets",
+                                   root_dir="../vit-spurious-robustness-modified/datasets",
                                    transform=transform)
         ood_dataset = WaterbirdDataset(data_correlation=0.95, split=split,
-                                       root_dir="/home/yxpengcs/PycharmProjects/vit-spurious-robustness-modified/datasets",
+                                       root_dir="../vit-spurious-robustness-modified/datasets",
                                        transform=transform)
         dataset.get_group(3)
         ood_dataset.get_group(2)
@@ -1653,7 +1585,7 @@ def setup_dataset(dataset_name, split, model_name=None, num_examples=None, fragm
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ])
         dataset = ConsistencyDataset(transform,
-            root_dir='/home/yxpengcs/PycharmProjects/vit-spurious-robustness-modified/datasets/waterbird_bg',
+            root_dir='../vit-spurious-robustness-modified/datasets/waterbird_bg',
             split=split)
     elif dataset_name == 'waterbirds-bg-water-group':
         transform = transforms.Compose([
@@ -1662,23 +1594,23 @@ def setup_dataset(dataset_name, split, model_name=None, num_examples=None, fragm
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ])
         dataset = ConsistencyDataset(transform,
-                                     root_dir='/home/yxpengcs/PycharmProjects/vit-spurious-robustness-modified/datasets/waterbird_bg',
+                                     root_dir='../vit-spurious-robustness-modified/datasets/waterbird_bg',
                                      split=split, label_select=1)
     elif dataset_name == 'waterbirds-bg-worst-group':
         transform = get_transform(model_dict[model_name])
         dataset = ConsistencyDataset(transform,
-                                     root_dir='/home/yxpengcs/PycharmProjects/vit-spurious-robustness-modified/datasets/waterbird_bg',
+                                     root_dir='../vit-spurious-robustness-modified/datasets/waterbird_bg',
                                      split=split, worst_group=True)
         intervention_dataset = ConsistencyDataset(transform,
-                                                  root_dir='/home/yxpengcs/PycharmProjects/vit-spurious-robustness-modified/datasets/waterbird_bg',
+                                                  root_dir='../vit-spurious-robustness-modified/datasets/waterbird_bg',
                                                   split=split, label_select=0)
     elif dataset_name == 'waterbirds-mean-worst-group':
         transform = get_transform(model_dict[model_name])
         dataset = WaterbirdDataset(data_correlation=0.95, split=split,
-                                       root_dir="/home/yxpengcs/PycharmProjects/vit-spurious-robustness-modified/datasets",
+                                       root_dir="../vit-spurious-robustness-modified/datasets",
                                        transform=transform,  worst_group=True)
         intervention_dataset = ConsistencyDataset(transform,
-                                     root_dir='/home/yxpengcs/PycharmProjects/vit-spurious-robustness-modified/datasets/waterbird_bg',
+                                     root_dir='../vit-spurious-robustness-modified/datasets/waterbird_bg',
                                      split=split, label_select=0)
     elif dataset_name == 'waterbirds-fg-water-group':
         transform = transforms.Compose([
@@ -1687,7 +1619,7 @@ def setup_dataset(dataset_name, split, model_name=None, num_examples=None, fragm
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ])
         dataset = ConsistencyDataset(transform,
-                                     root_dir='/home/yxpengcs/PycharmProjects/vit-spurious-robustness-modified/datasets/waterbird_fg',
+                                     root_dir='../vit-spurious-robustness-modified/datasets/waterbird_fg',
                                      split=split, label_select=1)
     elif dataset_name == 'waterbirds-fg-worst-group':
         transform = transforms.Compose([
@@ -1696,19 +1628,19 @@ def setup_dataset(dataset_name, split, model_name=None, num_examples=None, fragm
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ])
         dataset = ConsistencyDataset(transform,
-                                     root_dir='/home/yxpengcs/PycharmProjects/vit-spurious-robustness-modified/datasets/waterbird_fg',
+                                     root_dir='../vit-spurious-robustness-modified/datasets/waterbird_fg',
                                      split=split, worst_group=True)
     elif dataset_name == 'colored-mnist':
         if split == 'train':
             split = 'all_train'
-        dataset = ColoredMNIST(root='/home/yxpengcs/PycharmProjects/vision-grokking/new_data',
+        dataset = ColoredMNIST(root='../vision-grokking/new_data',
                                env=split, select_class='all',
                                transform=transforms.Compose([
                                    transforms.ToTensor(),
                                    transforms.Normalize((0.1307, 0.1307, 0.), (0.3081, 0.3081, 0.3081))
                                ]))
         intervention_dataset = ColoredMNIST(
-            root='/home/yxpengcs/PycharmProjects/vision-grokking/new_data',
+            root='../vision-grokking/new_data',
             env='test', select_class='all',
             transform=transforms.Compose([
                 transforms.ToTensor(),

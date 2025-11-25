@@ -46,44 +46,8 @@ if __name__ == "__main__":
     device = 'cuda:6'
     level = 'edge'
     df = pd.read_csv(csv_path)
-    # task = 'fmow-mean-id'
     tasks = ['camelyon17-mean-hospital2']
-    # tasks = []
-    # for i in [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8]:
-    #     tasks.append(f'metashift-control-{i}')
-    # cifar_c = ["fog", "frost", "motion_blur"]
-    # cifar_c = ["defocus_blur"]
-    # severities = [1, 2, 3, 4, 5]
-    # for data in cifar_c:
-    #     if data == "id":
-    #         tasks.append('cifar10-mean-id')
-    #     else:
-    #         for severity in severities:
-    #             tasks.append(f'cifar10-mean-{data}-{severity}')
-    # for i in range(5):
-    #     tasks.append(f'fmow-mean-time1-region{i}')
-    # wildcam_df = pd.read_csv('/home/yxpengcs/PycharmProjects/vit-spurious-robustness/output/iwildcam_sweep_results_new.csv')
-    # acc_cols = [c for c in wildcam_df.columns if c.startswith("test_acc")]
-    # tasks = [f"iwildcam-mean-{col.replace('test_acc_', '').replace('_', '-')}" for col in acc_cols]
-    # for domain in ['photo', 'cartoon', 'art_painting']:
-    #     for split in ['train', 'val', 'test']:
-    #         tasks.append(f"PACS-set2-mean-{domain}-{split}")
-    # for i in range(0,2):
-    #     for slide in [i * 10 + 8, i * 10 + 9]:
-    #         tasks.append(f"camelyon17-set2-mean-hospital{i}_slide{slide}")
-    # i = 1
-    # for j in range(4,8):
-    #     tasks.append(f"camelyon17-set2-mean-hospital{i}_slide{i*10+j}")
-    # for i in range(2,5):
-    #     for j in range(0,10):
-    #         tasks.append(f"camelyon17-set2-mean-hospital{i}_slide{i*10+j}")
-    # for corruption in ['motion_blur', 'zoom_blur', 'defocus_blur', 'snow', 'fog', 'frost', 'gaussian_noise', 'shot_noise']:
-    # for corruption in ['shot_noise']:
-    #     for severity in [1,2,3,4,5]:
-    #         tasks.append(f'camelyon17-set2-mean-{corruption}-{severity}-corrupt')
-    # for transform in ['edge_stylize','cartoon_stylize','pallete_stylize','posterize_stylize', 'solarize_stylize']:
-    #     tasks.append(f'camelyon17-set2-mean-{transform}-transform')
-    ckpt_root_path = '/home/yxpengcs/PycharmProjects/vit-spurious-robustness'
+    ckpt_root_path = 'root/path/to/models'
     split = 'train'
 
     for row in df.itertuples(index=False):
